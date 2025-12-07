@@ -1,0 +1,198 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Meditation Timer</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      text-align: center;
+      background: #f0f8ff;
+      margin: 0;
+      padding: 0;
+    }
+    h1 {
+      background-color: #4caf50;
+      color: white;
+      padding: 20px 0;
+      margin: 0;
+    }
+    #steps {
+      margin: 20px auto;
+      width: 90%;
+      max-width: 400px;
+      text-align: left;
+      background: #ffffff;
+      border-radius: 15px;
+      padding: 20px;
+      box-shadow: 0 4px 10px rgba(0,0,0,0.2);
+    }
+    #steps h2 {
+      text-align: center;
+      margin-top: 10px;
+    }
+    #steps ul {
+      list-style: none;
+      padding-left: 0;
+    }
+    #steps li {
+      margin: 15px 0;
+      font-size: 18px;
+      padding: 10px;
+      border-left: 5px solid #4caf50;
+      background: #f9f9f9;
+      border-radius: 5px;
+    }
+    #medImage {
+      display: block;
+      margin: 0 auto 15px auto;
+      width: 180px;
+      border-radius: 12px;
+    }
+    button {
+      padding: 15px 30px;
+      font-size: 20px;
+      cursor: pointer;
+      margin-top: 20px;
+      background-color: #4caf50;
+      color: white;
+      border: none;
+      border-radius: 15px;
+      box-shadow: 0 4px 8px rgba(0,0,0,0.2);
+    }
+    #timer {
+      display: none;
+      margin-top: 30px;
+    }
+    #status {
+      font-size: 24px;
+      color: #333;
+      margin-top: 20px;
+    }
+    #countdown {
+      font-size: 60px;
+      font-weight: bold;
+      color: #ff4500;
+      margin-top: 20px;
+    }
+  </style>
+</head>
+<body>
+
+  <h1>Meditation Timer</h1>
+
+  <!-- Front Page -->
+  <div id="steps">
+
+    <!-- YOUR IMAGE HERE -->
+    <img id="medImage" src="meditation.png" alt="Meditation Image">
+
+    <h2>Today's Meditation Scenario</h2>
+    <ul>
+      <li>7 min - Suka Kriya</li>
+      <li>7 min - OM Kara</li>
+      <li>3 min - Fast Breathing</li>
+      <li>1 min - Bandhas</li>
+      <li>3 min - Relaxation</li>
+    </ul>
+    <button id="startBtn">Start Meditation</button>
+  </div>
+
+  <!-- Timer Section -->
+  <div id="timer">
+    <p id="status">Meditation Started</p>
+    <div id="countdown">00:00</div>
+  </div>
+
+  <!-- Relaxation audio -->
+  <audio id="relaxAudio" src="videoplayback.weba" preload="auto"></audio>
+
+<script>
+  const schedule = [
+    { activity: "Suka Kriya", duration: 7 },
+    { activity: "OM Kara", duration: 7 },
+    { activity: "Fast Breathing", duration: 3 },
+    { activity: "Bandhas", duration: 1 },
+    { activity: "Relaxation", duration: 3 }
+  ];
+
+  const startBtn = document.getElementById("startBtn");
+  const stepsDiv = document.getElementById("steps");
+  const timerDiv = document.getElementById("timer");
+  const statusEl = document.getElementById("status");
+  const countdownEl = document.getElementById("countdown");
+  const relaxAudio = document.getElementById("relaxAudio");
+
+  function playBeep(durationMs = 2000) {
+    return new Promise((resolve) => {
+      const AudioCtx = window.AudioContext || window.webkitAudioContext;
+      const ctx = new AudioCtx();
+      const osc = ctx.createOscillator();
+      osc.type = "sine";
+      osc.frequency.value = 1000;
+      osc.connect(ctx.destination);
+      osc.start();
+      setTimeout(() => {
+        osc.stop();
+        ctx.close();
+        resolve();
+      }, durationMs);
+    });
+  }
+
+  startBtn.addEventListener("click", () => {
+    stepsDiv.style.display = "none";
+    timerDiv.style.display = "block";
+    startMeditation();
+  });
+
+  async function startMeditation() {
+    for (let i = 0; i < schedule.length; i++) {
+      const step = schedule[i];
+      statusEl.innerText = `Current Step: ${step.activity}`;
+
+      if (step.activity === "Relaxation") {
+        relaxAudio.currentTime = 0;
+        relaxAudio.play();
+        await runCountdown(step.duration);
+        relaxAudio.pause();
+        relaxAudio.currentTime = 0;
+        await playBeep();
+        break;
+      } else {
+        await runCountdown(step.duration);
+        await playBeep();
+      }
+    }
+
+    statusEl.innerText = "Meditation Completed! 🌸";
+    countdownEl.innerText = "00:00";
+  }
+
+  function runCountdown(minutes) {
+    return new Promise((resolve) => {
+      let timeLeft = minutes * 60;
+      updateDisplay(timeLeft);
+
+      const loop = setInterval(() => {
+        timeLeft--;
+        updateDisplay(timeLeft);
+
+        if (timeLeft <= 0) {
+          clearInterval(loop);
+          resolve();
+        }
+      }, 1000);
+    });
+  }
+
+  function updateDisplay(t) {
+    const mm = Math.floor(t / 60).toString().padStart(2, "0");
+    const ss = (t % 60).toString().padStart(2, "0");
+    countdownEl.innerText = `${mm}:${ss}`;
+  }
+</script>
+
+</body>
+</html>
